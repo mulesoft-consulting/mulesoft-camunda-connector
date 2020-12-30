@@ -53,3 +53,5 @@ target/
 #Developer files
 /src/main/resources/local.properties
 /src/main/resources/email-api-prod.properties
+
+.idea
