@@ -7,25 +7,71 @@
         xmlns:mule="http://www.mulesoft.org/schema/mule/core"
         xmlns:doc="http://www.mulesoft.org/schema/mule/documentation"
         xmlns:tns="http://www.mulesoft.org/schema/mule/module-camunda"
+        xmlns:http="http://www.mulesoft.org/schema/mule/http"
         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
         xsi:schemaLocation="
            http://www.mulesoft.org/schema/mule/module http://www.mulesoft.org/schema/mule/module/current/mule-module.xsd
            http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+           http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd
            http://www.mulesoft.org/schema/mule/module-camunda http://www.mulesoft.org/schema/mule/module-camunda/current/mule-module-camunda.xsd">
 
-    <operation name="set-payload-hardcoded" doc:description="Sets the payload to the String value 'Wubba Lubba Dub Dub'">
+    <property name="host" type="string" use="REQUIRED" displayName="Host" defaultValue=""
+              tab="Camunda Configuration"></property>
+    <property name="port" type="string" use="REQUIRED" displayName="Port" defaultValue=""
+              tab="Camunda Configuration"></property>
+    <property name="username" type="string" use="REQUIRED" displayName="Username" defaultValue=""
+              tab="Camunda Configuration"></property>
+    <property name="password" type="string" use="REQUIRED" displayName="Password" password="true" defaultValue=""
+              tab="Camunda Configuration"></property>
+
+    <http:request-config name="camunda-request-config" basePath="/engine-rest/">
+        <http:request-connection host="#[vars.host]" protocol="HTTP" port="#[vars.port]">
+            <http:authentication>
+                <http:basic-authentication username="#[vars.username]" password="#[vars.password]"/>
+            </http:authentication>
+        </http:request-connection>
+    </http:request-config>
+
+    <operation name="submit-start-form" doc:description="Submit Start Form">
+        <parameters>
+            <parameter name="id" type="string"  use="OPTIONAL" displayName="ID" defaultValue="" role="BEHAVIOUR"
+                       tab="General"></parameter>
+            <parameter name="key" type="string" use="OPTIONAL" displayName="Key" defaultValue="" role="BEHAVIOUR"
+                       tab="General"></parameter>
+            <parameter name="tenantId" type="string" use="OPTIONAL" displayName="Tenant ID" defaultValue="" role="BEHAVIOUR"
+                       tab="General"></parameter>
+            <parameter name="requestBody" type="string" displayName="Request Body" defaultValue="#[]" role="BEHAVIOUR"
+                       tab="General"></parameter>
+        </parameters>
+
         <body>
-            <mule:set-payload value="Wubba Lubba Dub Dub"/>
+            <mule:choice>
+                <mule:when expression="#[vars.id != null and (sizeOf(trim(vars.id)) > 0)]">
+                    <mule:set-variable value="#['process-definition/'++ vars.id ++ '/submit-form']" doc:name="Request ID" variableName="requestPath"/>
+                </mule:when>
+                <mule:when expression="#[vars.key != null and (sizeOf(trim(vars.key))> 0)]">
+                    <mule:set-variable value="#['process-definition/key/' ++ vars.key ++ '/submit-form']" doc:name="Request Key"
+                                       variableName="requestPath"/>
+                </mule:when>
+                <mule:otherwise>
+                    <mule:set-variable value="['process-definition/key/' ++ vars.key ++ '/tenant-id/' ++ vars.tenantId ++ '/submit-form']"
+                                       doc:name="Request Tenant ID" variableName="requestPath"/>
+                </mule:otherwise>
+            </mule:choice>
+
+            <mule:logger level="DEBUG" doc:name="Logger" message="#[vars.requestPath]"/>
+            <mule:set-payload value="#[vars.requestBody]"/>
+            <http:request config-ref="camunda-request-config" path="#[vars.requestPath]" method="POST"/>
         </body>
-        <output type="string" doc:description="Payload's output"/>
+        <output type="string" doc:description="Form's output"/>
     </operation>
 
-    <operation name="set-payload-hardcoded-two-times" doc:description="Sets the payload to the String value 'Wubba Lubba Dub Dub Dub Dub' (uses references to local operation)">
+    <operation name="set-payload-hardcoded-two-times"
+               doc:description="Sets the payload to the String value 'Wubba Lubba Dub Dub Dub Dub' (uses references to local operation)">
         <body>
-            <tns:set-payload-hardcoded/>
             <mule:set-payload value="#[payload ++ ' Dub Dub']"/>
         </body>
         <output type="string" doc:description="Payload's output"/>
     </operation>
 
- </module>
+</module>
