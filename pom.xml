@@ -6,7 +6,9 @@
     <groupId>org.mule.extensions</groupId>
     <artifactId>camunda-mule-extension</artifactId>
     <packaging>mule-extension</packaging>
-    <version>0.0.1-10-SNAPSHOT</version>
+
+    <version>0.0.1-20-SNAPSHOT</version>
+
 
     <name>Camunda Connector</name>
     <description>A Mule extension done with pure Mule DSL that depends in the runtime operations (set-payload,
